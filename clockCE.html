@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Clock and Details</title>
+    <style>
+        :root {
+            --bg-color: #292A33;
+            --clock-bg: #009285;
+            --text-color: #e0e0e0;
+            --accent-color: #4caf50;
+            --modal-bg: #252525;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 1. 數字時鐘（在上） */
+        #clock {
+            font-size: 110px;
+            font-weight: bold;
+            font-family: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace; 
+            letter-spacing: 2px;
+            background-color: var(--clock-bg);
+            color: #ffffff;
+            padding: 15px 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+        }
+
+        /* 2. 考試資料資訊欄（在下）- 確保整體置中，內部靠左對齊 */
+        #info-container {
+            font-size: 32px; 
+            line-height: 1.5;
+            max-width: 90%;
+            
+            display: grid;
+            grid-template-columns: auto auto; 
+            column-gap: 40px; 
+            row-gap: 25px;    
+            justify-content: center; 
+            align-items: center;    
+        }
+
+        .info-label {
+            text-align: left;
+            color: #d1d2d6;
+            white-space: nowrap;
+        }
+
+        .info-value {
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .label-sub-en {
+            display: block;
+            font-size: 0.85em;
+            color: #a0a1ab;
+            margin-top: 2px;
+        }
+        
+        .value-sub-zh {
+            font-size: 1.1em;
+            display: block;
+        }
+        
+        .value-sub-en {
+            font-size: 0.85em;
+            display: block;
+            margin-top: 2px;
+        }
+
+        #image-area {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #image-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .controls-wrapper {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 5px; 
+            align-items: center;
+        }
+
+        .low-profile-btn {
+            background: transparent;
+            border: 1px solid #4e4f5a;
+            color: #6e6f7a;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.3s;
+            user-select: none; 
+        }
+        .low-profile-btn:hover {
+            color: var(--text-color);
+            border-color: var(--text-color);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .zoom-btn {
+            font-weight: bold;
+            padding: 5px 8px;
+        }
+
+        /* 設定視窗 (Modal) - 確保 display 為 flex */
+        #config-modal {
+            display: flex; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg);
+            padding: 30px;
+            border-radius: 8px;
+            width: 480px; 
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+            flex-shrink: 0;
+        }
+
+        .form-group label {
+            width: 140px;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        .form-control {
+            flex: 1;
+            padding: 6px;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="clock">00:00:00</div>
+    <div id="info-container"></div>
+
+    <div id="image-area">
+        <img src="school.png" alt="學校標誌">
+    </div>
+
+    <div class="controls-wrapper">
+        <button id="edit-btn" class="low-profile-btn" onclick="openModal()">修改資料 / Edit</button>
+        <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(2)" title="放大">+</button>
+        <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(-2)" title="縮小">-</button>
+    </div>
+
+    <div id="config-modal">
+        <div class="modal-content">
+            <h3>考試頁面設定 / Exam Settings</h3>
+            
+            <div class="form-group">
+                <input type="checkbox" id="chk-subject" checked>
+                <label for="chk-subject">科目 Subject：</label>
+                <select id="val-subject" class="form-control" onchange="syncSubjectNames(this)">
+                    <option value="數學|Mathematics">數學 / Mathematics</option>
+                    <option value="數學 必修部分|Mathematics Compulsory Part">數學 必修部分 / Mathematics Compulsory Part</option>
+                    <option value="公民與社會發展科|Citizenship and Social Development">公民與社會發展科 / Citizenship & Social Dev.</option>
+                    <option value="視覺藝術|Visual Arts">視覺藝術 / Visual Arts</option>
+                    <option value="生物|Biology">生物 / Biology</option>
+                    <option value="經濟|Economics">經濟 / Economics</option>
+                    <option value="旅遊與款待|Tourism and Hospitality Studies">旅遊與款待 / Tourism & Hospitality</option>
+                    <option value="健康管理與社會關懷|Health Management and Social Care">健康管理與社會關懷 / HMSC</option>
+                    <option value="體育|Physical Education">體育 / Physical Education</option>
+                    <option value="CUSTOM">自訂 / Custom...</option>
+                </select>
+            </div>
+
+            <input type="hidden" id="custom-zh" value="">
+            <input type="hidden" id="custom-en" value="">
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-paper" checked>
+                <label for="chk-paper">卷別 Paper：</label>
+                <input type="text" id="val-paper" class="form-control" value="I">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-time" checked>
+                <label for="chk-time">時間 Exam Time：</label>
+                <input type="text" id="val-time" class="form-control" value="08:25 - ">
+            </div>
+
+            <button class="btn-submit" onclick="applySettings()">確認並應用 / Apply</button>
+        </div>
+    </div>
+
+    <script>
+        let currentFontSize = 32;
+
+        // 1. 實時時鐘功能 (24小時制)
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. 處理選單同步與自訂科目功能
+        function syncSubjectNames(selectElement) {
+            if (selectElement.value === "CUSTOM") {
+                const customZH = prompt("請輸入自訂【中文】科目名稱：");
+                if (customZH && customZH.trim() !== "") {
+                    const customEN = prompt("Please enter the 【English】 subject name:");
+                    document.getElementById('custom-zh').value = customZH.trim();
+                    document.getElementById('custom-en').value = customEN ? customEN.trim() : "";
+                    
+                    let customOpt = selectElement.querySelector('option[data-custom="true"]');
+                    if (!customOpt) {
+                        customOpt = document.createElement('option');
+                        customOpt.setAttribute('data-custom', 'true');
+                        selectElement.insertBefore(customOpt, selectElement.lastElementChild);
+                    }
+                    customOpt.value = "CUSTOM_VALUE";
+                    customOpt.textContent = `${customZH.trim()} / ${customEN ? customEN.trim() : ""}`;
+                    selectElement.value = "CUSTOM_VALUE";
+                } else {
+                    selectElement.selectedIndex = 0;
+                }
+            }
+        }
+
+        // 3. 應用設定並更新頁面內容
+        function applySettings() {
+            const container = document.getElementById('info-container');
+            container.innerHTML = ''; 
+
+            const chkSubject = document.getElementById('chk-subject').checked;
+            if (chkSubject) {
+                const selectVal = document.getElementById('val-subject').value;
+                let zhName = "";
+                let enName = "";
+
+                if (selectVal === "CUSTOM_VALUE") {
+                    zhName = document.getElementById('custom-zh').value;
+                    enName = document.getElementById('custom-en').value;
+                } else {
+                    const parts = selectVal.split('|');
+                    zhName = parts[0];
+                    enName = parts[1] || "";
+                }
+
+                if (zhName !== "") {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'info-label';
+                    labelDiv.innerHTML = `科目 Subject：`;
+                    
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'info-value';
+                    valueDiv.innerHTML = `<span class="value-sub-zh">${zhName}</span><span class="value-sub-en">${enName}</span>`;
+                    
+                    container.appendChild(labelDiv);
+                    container.appendChild(valueDiv);
+                }
+            }
+
+            const chkPaper = document.getElementById('chk-paper').checked;
+            const valPaper = document.getElementById('val-paper').value;
+            if (chkPaper && valPaper.trim() !== "") {
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'info-label';
+                labelDiv.textContent = '卷別 Paper：';
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'info-value';
+                valueDiv.textContent = valPaper;
+                container.appendChild(labelDiv);
+                container.appendChild(valueDiv);
+            }
+
+            const chkTime = document.getElementById('chk-time').checked;
+            const valTime = document.getElementById('val-time').value;
+            if (chkTime && valTime.trim() !== "") {
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'info-label';
+                labelDiv.textContent = '考試時間 Exam Time：';
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'info-value';
+                valueDiv.textContent = valTime;
+                container.appendChild(labelDiv);
+                container.appendChild(valueDiv);
+            }
+
+            // 只有點擊 Apply 時才會隱藏 Modal
+            document.getElementById('config-modal').style.display = 'none';
+        }
+
+        function openModal() {
+            document.getElementById('config-modal').style.display = 'flex';
+        }
+
+        function adjustFontSize(modifier) {
+            currentFontSize += modifier;
+            if (currentFontSize < 16) currentFontSize = 16;
+            if (currentFontSize > 80) currentFontSize = 80;
+            document.getElementById('info-container').style.fontSize = currentFontSize + 'px';
+        }
+
+        // 移除 window.onload 裡的 applySettings()，確保一開始 Modal 不會被腳本關掉
+    </script>
+</body>
+</html>

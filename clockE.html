@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Clock and Details</title>
+    <style>
+        :root {
+            --bg-color: #292A33;
+            --clock-bg: #009285;
+            --text-color: #e0e0e0;
+            --accent-color: #4caf50;
+            --modal-bg: #252525;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 1. Digital Clock (Top) */
+        #clock {
+            font-size: 110px;
+            font-weight: bold;
+            font-family: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace; 
+            letter-spacing: 2px;
+            background-color: var(--clock-bg);
+            color: #ffffff;
+            padding: 15px 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+        }
+
+        /* 2. Exam Information Container (Bottom) */
+        #info-container {
+            font-size: 32px; 
+            line-height: 1.8;
+            max-width: 80%;
+            
+            display: grid;
+            grid-template-columns: auto auto; 
+            column-gap: 20px; 
+            justify-content: center; 
+        }
+
+        .info-label {
+            text-align: left;
+            color: #d1d2d6;
+        }
+
+        .info-value {
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        /* Right-bottom Image Area */
+        #image-area {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #image-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Left-bottom Control Wrapper (Edit + Zoom) */
+        .controls-wrapper {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 5px; 
+            align-items: center;
+        }
+
+        .low-profile-btn {
+            background: transparent;
+            border: 1px solid #4e4f5a;
+            color: #6e6f7a;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.3s;
+            user-select: none; 
+        }
+        .low-profile-btn:hover {
+            color: var(--text-color);
+            border-color: var(--text-color);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .zoom-btn {
+            font-weight: bold;
+            padding: 5px 8px;
+        }
+
+        /* Config Modal */
+        #config-modal {
+            display: flex; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg);
+            padding: 30px;
+            border-radius: 8px;
+            width: 520px; /* Widened slightly for longer English subject names */
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+            flex-shrink: 0;
+        }
+
+        .form-group label {
+            flex: 1;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+
+        .form-control {
+            width: 55%;
+            padding: 6px;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="clock">00:00:00</div>
+
+    <div id="info-container"></div>
+
+    <div id="image-area">
+        <img src="school.png" alt="School Logo">
+    </div>
+
+    <div class="controls-wrapper">
+        <button id="edit-btn" class="low-profile-btn" onclick="openModal()">Edit Info</button>
+        <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(2)" title="Enlarge Text">+</button>
+        <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(-2)" title="Shrink Text">-</button>
+    </div>
+
+    <div id="config-modal">
+        <div class="modal-content">
+            <h3>Exam Page Settings</h3>
+            
+            <div class="form-group">
+                <input type="checkbox" id="chk-center-id">
+                <label for="chk-center-id">Centre No.:</label>
+                <input type="text" id="val-center-id" class="form-control" value="J1450">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-center-name">
+                <label for="chk-center-name">Centre Name:</label>
+                <input type="text" id="val-center-name" class="form-control" value="HKWMA Chu Shek Lun Secondary School">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-subject" checked>
+                <label for="chk-subject">Subject:</label>
+                <select id="val-subject" class="form-control" onchange="checkSubjectCustom(this)">
+                    <option value="English Language">English Language</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Mathematics Compulsory Part">Mathematics Compulsory Part</option>
+                    <option value="Citizenship and Social Development">Citizenship and Social Development</option>
+                    <option value="Science">Science</option>
+                    <option value="Citizenship, Economics and Society">Citizenship, Economics and Society</option>
+                    <option value="Geography">Geography</option>
+                    <option value="History">History</option>
+                    <option value="Integrated Humanities">Integrated Humanities</option>
+                    <option value="Chinese History">Chinese History</option>
+                    <option value="Visual Arts">Visual Arts</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Economics">Economics</option>
+                    <option value="Tourism and Hospitality Studies">Tourism and Hospitality Studies</option>
+                    <option value="Health Management and Social Care">Health Management and Social Care</option>
+                    <option value="Physical Education">Physical Education</option>
+                    <option value="CUSTOM">Custom...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-paper">
+                <label for="chk-paper">Paper:</label>
+                <input type="text" id="val-paper" class="form-control" value="I">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-lang">
+                <label for="chk-lang">Language Version:</label>
+                <input type="text" id="val-lang" class="form-control" value="English">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-module">
+                <label for="chk-module">Elective Module:</label>
+                <input type="text" id="val-module" class="form-control" value="">
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="chk-time" checked>
+                <label for="chk-time">Exam Time:</label>
+                <input type="text" id="val-time" class="form-control" value="08:25 - ">
+            </div>
+
+            <button class="btn-submit" onclick="applySettings()">Confirm & Apply</button>
+        </div>
+    </div>
+
+    <script>
+        let currentFontSize = 32;
+
+        // 1. Real-time Clock (24-Hour Format)
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. Handle Custom Subject prompt
+        let customSubjectValue = "";
+        function checkSubjectCustom(selectElement) {
+            if (selectElement.value === "CUSTOM") {
+                const customInput = prompt("Please enter the custom subject name:");
+                if (customInput && customInput.trim() !== "") {
+                    customSubjectValue = customInput.trim();
+                    let customOpt = selectElement.querySelector('option[data-custom="true"]');
+                    if (!customOpt) {
+                        customOpt = document.createElement('option');
+                        customOpt.setAttribute('data-custom', 'true');
+                        selectElement.insertBefore(customOpt, selectElement.lastElementChild);
+                    }
+                    customOpt.value = customSubjectValue;
+                    customOpt.textContent = customSubjectValue;
+                    selectElement.value = customSubjectValue;
+                } else {
+                    selectElement.selectedIndex = 0;
+                }
+            }
+        }
+
+        // 3. Apply settings and update layout
+        function applySettings() {
+            const container = document.getElementById('info-container');
+            container.innerHTML = ''; 
+
+            const fields = [
+                { chk: 'chk-center-id', val: 'val-center-id', label: 'Centre No.' },
+                { chk: 'chk-center-name', val: 'val-center-name', label: 'Centre Name' },
+                { chk: 'chk-subject', val: 'val-subject', label: 'Subject' },
+                { chk: 'chk-paper', val: 'val-paper', label: 'Paper' },
+                { chk: 'chk-lang', val: 'val-lang', label: 'Language Version' },
+                { chk: 'chk-module', val: 'val-module', label: 'Elective Module' },
+                { chk: 'chk-time', val: 'val-time', label: 'Exam Time' }
+            ];
+
+            fields.forEach(field => {
+                const isChecked = document.getElementById(field.chk).checked;
+                if (isChecked) {
+                    const value = document.getElementById(field.val).value;
+                    if (value.trim() !== "") {
+                        const labelDiv = document.createElement('div');
+                        labelDiv.className = 'info-label';
+                        labelDiv.textContent = `${field.label}:`;
+
+                        const valueDiv = document.createElement('div');
+                        valueDiv.className = 'info-value';
+                        valueDiv.textContent = value;
+
+                        container.appendChild(labelDiv);
+                        container.appendChild(valueDiv);
+                    }
+                }
+            });
+
+            document.getElementById('config-modal').style.display = 'none';
+        }
+
+        function openModal() {
+            document.getElementById('config-modal').style.display = 'flex';
+        }
+
+        // 4. Font size adjustment
+        function adjustFontSize(modifier) {
+            currentFontSize += modifier;
+            if (currentFontSize < 16) currentFontSize = 16;
+            if (currentFontSize > 80) currentFontSize = 80;
+            document.getElementById('info-container').style.fontSize = currentFontSize + 'px';
+        }
+    </script>
+</body>
+</html>
