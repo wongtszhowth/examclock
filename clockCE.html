@@ -6,11 +6,27 @@
     <title>Exam Clock and Details</title>
     <style>
         :root {
+            /* 深色模式變數 / Dark Mode Variables */
             --bg-color: #292A33;
             --clock-bg: #009285;
             --text-color: #e0e0e0;
             --accent-color: #4caf50;
             --modal-bg: #252525;
+            --label-color: #d1d2d6;
+            --sub-label-color: #a0a1ab;
+            --clock-text: #ffffff;
+        }
+
+        /* 淺色模式變數 / Light Mode Variables */
+        [data-theme="light"] {
+            --bg-color: #f5f6fa;
+            --clock-bg: #00796b;
+            --text-color: #222222;
+            --accent-color: #2e7d32;
+            --modal-bg: #ffffff;
+            --label-color: #444444;
+            --sub-label-color: #666666;
+            --clock-text: #ffffff;
         }
 
         body {
@@ -26,6 +42,7 @@
             align-items: center;
             overflow: hidden;
             box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s; /* 讓切換流暢 */
         }
 
         /* 1. 數字時鐘（在上） */
@@ -35,11 +52,12 @@
             font-family: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace; 
             letter-spacing: 2px;
             background-color: var(--clock-bg);
-            color: #ffffff;
+            color: var(--clock-text);
             padding: 15px 40px;
             border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             margin-bottom: 40px;
+            transition: background-color 0.3s;
         }
 
         /* 2. 考試資料資訊欄（在下）- 確保整體置中，內部靠左對齊 */
@@ -58,21 +76,24 @@
 
         .info-label {
             text-align: left;
-            color: #d1d2d6;
+            color: var(--label-color);
             white-space: nowrap;
+            transition: color 0.3s;
         }
 
         .info-value {
             text-align: left;
             font-weight: bold;
             color: var(--text-color);
+            transition: color 0.3s;
         }
 
         .label-sub-en {
             display: block;
             font-size: 0.85em;
-            color: #a0a1ab;
+            color: var(--sub-label-color);
             margin-top: 2px;
+            transition: color 0.3s;
         }
         
         .value-sub-zh {
@@ -123,10 +144,14 @@
             transition: all 0.3s;
             user-select: none; 
         }
+        [data-theme="light"] .low-profile-btn {
+            border-color: #cccccc;
+            color: #666666;
+        }
         .low-profile-btn:hover {
             color: var(--text-color);
             border-color: var(--text-color);
-            background: rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.05);
         }
         
         .zoom-btn {
@@ -142,7 +167,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -154,15 +179,22 @@
             border-radius: 8px;
             width: 480px; 
             max-width: 90%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             max-height: 85vh;
             overflow-y: auto;
+            transition: background-color 0.3s;
+        }
+        [data-theme="light"] .modal-content {
+            border: 1px solid #ddd;
         }
 
         .modal-content h3 {
             margin-top: 0;
             border-bottom: 1px solid #444;
             padding-bottom: 10px;
+        }
+        [data-theme="light"] .modal-content h3 {
+            border-bottom-color: #eee;
         }
 
         .form-group {
@@ -191,6 +223,12 @@
             color: #fff;
             border-radius: 4px;
             box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        [data-theme="light"] .form-control {
+            background: #ffffff;
+            border-color: #ccc;
+            color: #333;
         }
 
         .btn-submit {
@@ -219,6 +257,7 @@
     </div>
 
     <div class="controls-wrapper">
+        <button id="theme-btn" class="low-profile-btn" onclick="toggleTheme()">☀️</button>
         <button id="edit-btn" class="low-profile-btn" onclick="openModal()">修改資料 / Edit</button>
         <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(2)" title="放大">+</button>
         <button class="low-profile-btn zoom-btn" onclick="adjustFontSize(-2)" title="縮小">-</button>
@@ -266,6 +305,23 @@
 
     <script>
         let currentFontSize = 32;
+
+        // 核心：深淺色主題初始化與控制邏輯
+        const savedTheme = localStorage.getItem('exam-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeButton(savedTheme);
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('exam-theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
 
         // 1. 實時時鐘功能 (24小時制)
         function updateClock() {
